@@ -160,10 +160,8 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
     }
 
     private fun sourceCmd(): String {
-        val msg = "Исходный код проекта на GitHub: https://github.com/gavrix32/chemk-timetable-bot"
-        val sendMessage = SendMessage.builder().chatId(chatId).text(msg).replyMarkup(
-            InlineKeyboardMarkup.builder().keyboardRow(buildingMenuKeyboardRow()).build()
-        ).build()
+        val msg = "Исходный код на <b>GitHub</b>: https://github.com/gavrix32/chemk-timetable-bot"
+        val sendMessage = SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").build()
         telegramClient.execute(sendMessage)
         return msg
     }
