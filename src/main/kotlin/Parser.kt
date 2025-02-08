@@ -104,7 +104,7 @@ object Parser {
             val staticTimetableLines = IP523.getStaticTimetable(dayOfWeek).lines()
             val timetableLines = timetable.lines().toMutableList()
             for (i in timetableLines.indices) {
-                if (timetableLines[i].contains("по расписанию")) {
+                if (timetableLines[i].lowercase().contains("по расписанию")) {
                     if (i < staticTimetableLines.size) {
                         timetableLines[i] = staticTimetableLines[timetableLines[i][0].digitToInt()-1]
                     }
