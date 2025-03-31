@@ -4,7 +4,6 @@ import java.util.Calendar
 
 object IP523 {
     fun getStaticTimetable(dayOfWeek: String): String {
-
         val alternatingPair1 = if (Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0) {
             "3. Теория вероятностей и математическая статистика, Шмелева М.В., 209М"
         } else {

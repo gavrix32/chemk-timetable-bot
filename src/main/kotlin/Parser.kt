@@ -1,9 +1,6 @@
 package net.gavrix32
 
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 import org.slf4j.LoggerFactory
-import java.io.IOException
 
 object Parser {
     val logger = LoggerFactory.getLogger(Parser.javaClass)
@@ -17,15 +14,12 @@ object Parser {
             logger.error("Unknown day $day")
             return Pair(Status.UNKNOWN_DAY, "Неизвестный день $day.")
         }
-        var document = Document("")
-        try {
-            document = Jsoup.connect("https://rsp.chemk.org/${building}korp/${day}.htm").get()
-        } catch (e: IOException) {
-            return Pair(Status.CONNECTION_ERROR, "Не удалось получить данные с сайта:\n\n$e")
-        }
+
+        var document = DocumentServer.get(building, day)
+
         val table = document.selectFirst("table") ?: run {
             logger.error("Table not found")
-            return Pair(Status.TABLE_NOT_FOUND, "Таблица не найдена.")
+            return Pair(Status.TABLE_NOT_FOUND, "Расписание не найдено.")
         }
 
         var dayOfWeek = ""
@@ -85,7 +79,7 @@ object Parser {
         }
         if (groupRow == -1) {
             logger.error("Group $group not found on day $day")
-            return Pair(Status.GROUP_NOT_FOUND, "Группа $group не найдена.")
+            return Pair(Status.GROUP_NOT_FOUND, "Группа $group в расписании отсутствует.")
         }
 
         // 1,2,3 -> 1\n2\n3
