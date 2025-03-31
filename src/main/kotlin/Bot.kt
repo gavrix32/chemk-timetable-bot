@@ -1,5 +1,3 @@
-package net.gavrix32
-
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory

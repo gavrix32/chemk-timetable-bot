@@ -1,5 +1,3 @@
-package net.gavrix32
-
 import kotlinx.serialization.Serializable
 
 @Serializable

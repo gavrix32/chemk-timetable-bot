@@ -1,53 +1,27 @@
-package net.gavrix32
-
+import kotlinx.serialization.json.Json
+import java.io.File
 import java.util.Calendar
 
 object IP523 {
     fun getStaticTimetable(dayOfWeek: String): String {
-        val alternatingPair1 = if (Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0) {
-            "3. Теория вероятностей и математическая статистика, Шмелева М.В., 209М"
-        } else {
-            "3. ЭВМ, Баранова О.Б., 209М"
-        }
+        val isAlternative = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0
 
-        val alternatingPair2 = if (Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0) {
-            "2. Основы проектирования БД, Мелешкина Е.В., 206М"
-        } else {
-            "2. Финансовая грамотность, Сатарова А.И., 208М"
+        var mainFile = File("ip5-23.json")
+        if (!mainFile.exists()) {
+            return "Не найден файл с постоянным расписанием."
         }
+        val mainRasp: Map<String, List<String>> = Json.decodeFromString(mainFile.readText())
+        println(mainRasp[dayOfWeek]!!.joinToString("\n"))
 
-        when (dayOfWeek) {
-            "понедельник" -> return """
-                1. ИТ, Васильева К.В., 208М
-                2. ОАиП, Мелешкина Е.В., 206М
-                3. Теория вероятностей и математическая статистика, Шмелева М.В., 102О
-            """.trimIndent()
-            "вторник" -> return """
-                1.
-                2.
-                3. Психология общения, Филиппова О.В., 2 корпус, 110
-                4. ЭВМ, Баранова О.Б., 2 корпус, 220
-            """.trimIndent()
-            "среду" -> return """
-                1. МДК.01.01 Разработка программных модулей, Савинова Е.А., 210М
-                2. Иностранный язык в ПД, Федорова Т.В., 103У
-                $alternatingPair1
-            """.trimIndent()
-            "четверг" -> return """
-                1. Архитектура аппаратных средств, Савинова Е.А., 210М
-                $alternatingPair2
-                3. Численные методы, Федорова Л.В., 204М
-            """.trimIndent()
-            "пятницу" -> return """
-                1. Компьютерные сети, Думилина Л.Ю., 103М
-                2. Основы проектирования БД, Мелешкина Е.В., 206М
-            """.trimIndent()
-            "субботу" -> return """
-                1. Физкультура, Морозов А.В., с/з
-                2. МДК.01.01 Разработка программных модулей, Савинова Е.А. , 210М
-                3. ИТ, Васильева К.В., 208М
-            """.trimIndent()
-            else -> return "Неизвестный день недели: $dayOfWeek"
+        var altFile = File("ip5-23_alt.json")
+        if (!altFile.exists()) {
+                return "Не найден файл с чередующимся расписанием."
         }
+        val altRasp: Map<String, List<String>> = Json.decodeFromString(altFile.readText())
+
+        if (isAlternative && altRasp[dayOfWeek] != null) {
+            return altRasp[dayOfWeek]!!.joinToString("\n")
+        }
+        return mainRasp[dayOfWeek]!!.joinToString("\n")
     }
 }

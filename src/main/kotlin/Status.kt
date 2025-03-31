@@ -1,5 +1,3 @@
-package net.gavrix32
-
 enum class Status {
     SUCCESS,
     SUCCESS_STATIC,

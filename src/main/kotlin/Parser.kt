@@ -1,5 +1,3 @@
-package net.gavrix32
-
 import org.slf4j.LoggerFactory
 
 object Parser {
