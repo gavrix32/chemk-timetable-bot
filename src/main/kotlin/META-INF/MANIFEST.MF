@@ -1,3 +1,2 @@
 Manifest-Version: 1.0
-Main-Class: net.gavrix32.BotKt
-
+Main-Class: BotKt

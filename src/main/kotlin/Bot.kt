@@ -5,16 +5,18 @@ import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
+import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 import java.io.File
-import java.util.Calendar
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class Bot : LongPollingSingleThreadUpdateConsumer {
     private val logger = LoggerFactory.getLogger("Bot")
@@ -28,12 +30,9 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
         loadData()
         var timer = Executors.newScheduledThreadPool(1)
         val task = Runnable {
-            val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-            if (currentHour in 12..17) {
-                checkAndSendTimetableChanges()
-            }
+            checkAndSendTimetableChanges()
         }
-        timer.scheduleAtFixedRate(task, 0, 30, TimeUnit.MINUTES)
+        timer.scheduleAtFixedRate(task, 0, 60, TimeUnit.MINUTES)
     }
 
     private fun checkAndSendTimetableChanges() {
@@ -41,18 +40,12 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
         DocumentServer.update()
         database.forEach { (id, _) ->
             if (getOrPutData(id).notifyChanges) {
-                var parserData = Parser.tomorrow(getOrPutData(id).building, getOrPutData(id).group)
+                val parserData = Parser.tomorrow(getOrPutData(id).building, getOrPutData(id).group)
                 if (getOrPutData(id).tomorrowTimetable != parserData.second) {
                     getOrPutData(id).tomorrowTimetable = parserData.second
                     if (parserData.first == Status.SUCCESS) {
-                        var msg = parserData.second.replace("Расписание", "Изменение в расписании")
-                        val sendMessage = SendMessage
-                            .builder()
-                            .chatId(id)
-                            .text(msg)
-                            .parseMode("HTML")
-                            .replyToMessageId(message.messageId)
-                            .build()
+                        val msg = parserData.second.replace("Расписание", "Изменение в расписании")
+                        val sendMessage = SendMessage.builder().chatId(id).text(msg).parseMode("HTML").build()
                         telegramClient.execute(sendMessage)
                         logCommands("", msg, false)
                     }
@@ -86,28 +79,18 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
 
     private fun startCmd(): String {
         val msg = "Напишите /setup чтобы выбрать корпус и группу."
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .parseMode("HTML")
-            .replyToMessageId(message.messageId)
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").replyToMessageId(message.messageId).build()
         telegramClient.execute(sendMessage)
         return msg
     }
 
     private fun saveAndSend(parserData: Pair<Status, String>): String {
         if (parserData.first == Status.BUILDING_NOT_FOUND) return setupCmd()
-        var msg = parserData.second
+        val msg = parserData.second
         getOrPutData(chatId).todayTimetable = msg
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .parseMode("HTML")
-            .replyToMessageId(message.messageId)
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").replyToMessageId(message.messageId).build()
         telegramClient.execute(sendMessage)
         return msg
     }
@@ -126,26 +109,16 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
         getOrPutData(chatId).notifyChanges = !getOrPutData(chatId).notifyChanges
         val action = if (getOrPutData(chatId).notifyChanges) "включили" else "выключили"
         val msg = "Вы <b>$action</b> уведомления об изменениях в расписании."
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .parseMode("HTML")
-            .replyToMessageId(message.messageId)
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").replyToMessageId(message.messageId).build()
         telegramClient.execute(sendMessage)
         return msg
     }
 
     private fun unknownCmd(): String {
         val msg = "Нет такой команды."
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .parseMode("HTML")
-            .replyToMessageId(message.messageId)
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").replyToMessageId(message.messageId).build()
         telegramClient.execute(sendMessage)
         return msg
     }
@@ -153,7 +126,13 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
     private fun logCommands(cmd: String, msg: String, printName: Boolean) {
         logger.info("----------------------------")
         if (printName) {
-            logger.info("Message from ${message.chat.firstName} ${message.chat.lastName} (id = ${chatId}) for group ${getOrPutData(chatId).group}")
+            logger.info(
+                "Message from ${message.chat.firstName} ${message.chat.lastName} (id = ${chatId}) for group ${
+                    getOrPutData(
+                        chatId
+                    ).group
+                }"
+            )
         } else {
             logger.info("Message from NO_NAME (id = ${chatId})")
         }
@@ -173,29 +152,18 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
 
     private fun setupCmd(): String {
         val msg = "Выберите корпус:"
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .replyToMessageId(message.messageId)
-            .replyMarkup(InlineKeyboardMarkup
-                .builder()
-                .keyboardRow(buildingMenuKeyboardRow())
-                .build())
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).replyToMessageId(message.messageId).replyMarkup(
+                InlineKeyboardMarkup.builder().keyboardRow(buildingMenuKeyboardRow()).build()
+            ).build()
         telegramClient.execute(sendMessage)
         return msg
     }
 
     private fun currentGroupCmd(): String {
         val msg = "Текущая группа: <b>${getOrPutData(chatId).group}</b>."
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .parseMode("HTML")
-            .replyToMessageId(message.messageId)
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").replyToMessageId(message.messageId).build()
         telegramClient.execute(sendMessage)
         getOrPutData(chatId).waitingGroupMsg = false
         return msg
@@ -203,13 +171,8 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
 
     private fun sourceCmd(): String {
         val msg = "Исходный код на <b>GitHub</b>: https://github.com/gavrix32/chemk-timetable-bot"
-        val sendMessage = SendMessage
-            .builder()
-            .chatId(chatId)
-            .text(msg)
-            .parseMode("HTML")
-            .replyToMessageId(message.messageId)
-            .build()
+        val sendMessage =
+            SendMessage.builder().chatId(chatId).text(msg).parseMode("HTML").replyToMessageId(message.messageId).build()
         telegramClient.execute(sendMessage)
         return msg
     }
@@ -229,8 +192,10 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
                 else -> {
                     if (getOrPutData(chatId).waitingGroupMsg) {
                         getOrPutData(chatId).group = cmd
-                        getOrPutData(chatId).todayTimetable = Parser.today(getOrPutData(chatId).building, getOrPutData(chatId).group).second
-                        getOrPutData(chatId).tomorrowTimetable = Parser.tomorrow(getOrPutData(chatId).building, getOrPutData(chatId).group).second
+                        getOrPutData(chatId).todayTimetable =
+                            Parser.today(getOrPutData(chatId).building, getOrPutData(chatId).group).second
+                        getOrPutData(chatId).tomorrowTimetable =
+                            Parser.tomorrow(getOrPutData(chatId).building, getOrPutData(chatId).group).second
                         currentGroupCmd()
                     } else {
                         unknownCmd()
@@ -246,12 +211,8 @@ class Bot : LongPollingSingleThreadUpdateConsumer {
             if (callbackData.startsWith("building_")) {
                 getOrPutData(chatId).building = callbackData.substringAfter("building_").toInt()
                 val msg = "Отправьте название группы в ответ на это сообщение, соблюдая регистр.\n\nНапример: Ип5-23"
-                val editMsgText = EditMessageText
-                    .builder()
-                    .chatId(chatId)
-                    .messageId(message.messageId)
-                    .text(msg)
-                    .build()
+                val editMsgText =
+                    EditMessageText.builder().chatId(chatId).messageId(message.messageId).text(msg).build()
                 telegramClient.execute(editMsgText)
                 getOrPutData(chatId).waitingGroupMsg = true
                 logCommands("*Pressed button $callbackData*", msg, true)

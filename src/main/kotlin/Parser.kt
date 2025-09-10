@@ -13,7 +13,7 @@ object Parser {
             return Pair(Status.UNKNOWN_DAY, "Неизвестный день $day.")
         }
 
-        var document = DocumentServer.get(building, day)
+        val document = DocumentServer.get(building, day)
 
         val table = document.selectFirst("table") ?: run {
             logger.error("Table not found")
@@ -70,9 +70,9 @@ object Parser {
         // Если группа Ип5-23 и её нет в таблице то вывести постоянное расписание
         if (groupRow == -1 && group == "Ип5-23") {
             // удаление путсых пар из постоянной таблицы
-            timetable = IP523.getStaticTimetable(dayOfWeek).lines()
-                .filter { it.isNotBlank() && !it.trim().endsWith(".") }
-                .joinToString("\n")
+            timetable =
+                IP523.getStaticTimetable(dayOfWeek).lines().filter { it.isNotBlank() && !it.trim().endsWith(".") }
+                    .joinToString("\n")
             return Pair(Status.SUCCESS_STATIC, "Расписание на <b>$dayOfWeek</b> (постоянное):\n\n$timetable")
         }
         if (groupRow == -1) {
@@ -98,7 +98,7 @@ object Parser {
             for (i in timetableLines.indices) {
                 if (timetableLines[i].lowercase().contains("по расписанию")) {
                     if (i < staticTimetableLines.size) {
-                        timetableLines[i] = staticTimetableLines[timetableLines[i][0].digitToInt()-1]
+                        timetableLines[i] = staticTimetableLines[timetableLines[i][0].digitToInt() - 1]
                     }
                 }
             }
@@ -106,11 +106,9 @@ object Parser {
         }
 
         // Сортировка по номеру пары
-        timetable = timetable.lines()
-            .sortedBy { line ->
-                line.substringBefore('.').toIntOrNull() ?: Int.MAX_VALUE
-            }
-            .joinToString("\n")
+        timetable = timetable.lines().sortedBy { line ->
+            line.substringBefore('.').toIntOrNull() ?: Int.MAX_VALUE
+        }.joinToString("\n")
 
         return Pair(Status.SUCCESS, "Расписание на <b>$dayOfWeek</b> (по замене):\n\n$timetable")
     }

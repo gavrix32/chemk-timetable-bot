@@ -12,7 +12,8 @@ object DocumentServer {
             for (day in 0..1) {
                 val dayTxt = if (day == 0) "today" else "tomorrow"
                 try {
-                    tables[2 * building + day] = Jsoup.connect("https://rsp.chemk.org/${building + 1}korp/${dayTxt}.htm").get()
+                    tables[2 * building + day] =
+                        Jsoup.connect("https://rsp.chemk.org/${building + 1}korp/${dayTxt}.htm").get()
                 } catch (e: IOException) {
                     return logger.error("Failed to get data from server (building = ${building + 1}, day = $dayTxt):\n$e")
                 }
